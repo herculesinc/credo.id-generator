@@ -1,0 +1,25 @@
+{
+  "name": "@credo/id-generator",
+  "version": "0.1.0",
+  "description": "ID Generator for Credo project",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herculesinc/credo.id-generator.git/"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "irakliy",
+    "email": "irakliy81@live.com"
+  },
+  "engines": {
+    "node": "5.0.0"
+  },
+  "devDependencies": {
+    "del": "^1.2.1",
+    "gulp": "^3.9.0"
+  },
+  "dependencies": {
+    "big-integer": "^1.6.9"
+  }
+}
