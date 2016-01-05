@@ -35,7 +35,7 @@ export class IdGenerator {
         }
 	}
     
-    next(): Promise<string> {
+    getNextId(): Promise<string> {
         var currentMillisecond = Date.now() - this.epoch; 
         if (currentMillisecond === this.previousMillisecond) {
             this.counter++;
@@ -47,7 +47,7 @@ export class IdGenerator {
                 // return a promise that will call next() again in 2 ms
                 return new Promise((resolve, reject) => {
                     setTimeout(() => {
-                        this.next()
+                        this.getNextId()
                             .then((id) => resolve(id))
                             .catch((reason) => reject(reason));
                     }, 2);

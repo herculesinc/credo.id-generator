@@ -19,7 +19,7 @@ class IdGenerator {
             throw new Error(`Epoch number is less than 0`);
         }
     }
-    next() {
+    getNextId() {
         var currentMillisecond = Date.now() - this.epoch;
         if (currentMillisecond === this.previousMillisecond) {
             this.counter++;
@@ -31,7 +31,7 @@ class IdGenerator {
                 // return a promise that will call next() again in 2 ms
                 return new Promise((resolve, reject) => {
                     setTimeout(() => {
-                        this.next()
+                        this.getNextId()
                             .then((id) => resolve(id))
                             .catch((reason) => reject(reason));
                     }, 2);

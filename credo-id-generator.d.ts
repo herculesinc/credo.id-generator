@@ -11,6 +11,6 @@ declare module "@credo/id-generator" {
     // --------------------------------------------------------------------------------------------
 	export class IdGenerator {
 		constructor(options: IdGeneratorOptions);
-		next(): Promise<string>;
+		getNextId(): Promise<string>;
 	}
 }
