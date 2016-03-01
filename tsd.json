@@ -6,10 +6,13 @@
   "bundle": "typings/tsd.d.ts",
   "installed": {
     "node/node.d.ts": {
-      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+      "commit": "470954c4f427e0805a2d633636a7c6aa7170def8"
     },
-    "big-integer/big-integer.d.ts": {
-      "commit": "dc9dabe74a5be62613b17a3605309783a12ff28a"
+    "redis/redis.d.ts": {
+      "commit": "470954c4f427e0805a2d633636a7c6aa7170def8"
+    },
+    "long/long.d.ts": {
+      "commit": "a57c54b2b20bb38aadfa2460b82df9541dc0fdea"
     }
   }
 }

@@ -1,58 +1,63 @@
 "use strict";
 // IMPORTS
 // ================================================================================================
-var BigInt = require('big-integer');
+const redis = require('redis');
+const Long = require('long');
 // MODULE VARIABLES
 // ================================================================================================
-var MAX_SHARD = 4096;
-var MAX_COUNT = 512;
+var FILLER_LENGTH = 16;
+var MAX_SEQUENCE = Math.pow(2, FILLER_LENGTH);
 // ID GENERATOR CLASS
 // ================================================================================================
 class IdGenerator {
     constructor(options) {
-        this.shard = options.shard;
-        if (this.shard < 0 || this.shard > MAX_SHARD) {
-            throw new Error(`Shard number ${this.shard} exeeds allowed limit of ${MAX_SHARD} or is less than 0`);
-        }
-        this.epoch = options.epoch;
-        if (this.epoch < 0) {
-            throw new Error(`Epoch number is less than 0`);
-        }
+        this.sequenceKey = `credo::id-generator::sequence::${options.name}`;
+        this.client = hasClient(options)
+            ? options.redis
+            : redis.createClient(options.redis);
     }
     getNextId() {
-        var currentMillisecond = Date.now() - this.epoch;
-        if (currentMillisecond === this.previousMillisecond) {
-            this.counter++;
-            if (this.counter < MAX_COUNT) {
-                var id = buildId(currentMillisecond, this.shard, this.counter);
-                return Promise.resolve(id);
-            }
-            else {
-                // return a promise that will call next() again in 2 ms
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        this.getNextId()
-                            .then((id) => resolve(id))
-                            .catch((reason) => reject(reason));
-                    }, 2);
-                });
-            }
-        }
-        else {
-            this.counter = 0;
-            this.previousMillisecond = currentMillisecond;
-            var id = buildId(currentMillisecond, this.shard, this.counter);
-            return Promise.resolve(id);
-        }
+        return new Promise((resolve, reject) => {
+            this.client.eval(script, 1, this.sequenceKey, (err, reply) => {
+                if (err) {
+                    return reject(err);
+                }
+                var id = Long.fromNumber(reply[1] * 1000 + Math.floor(reply[2] / 1000));
+                id = id.shiftLeft(FILLER_LENGTH);
+                id = id.or(reply[0]);
+                resolve(id.toString(10));
+            });
+        });
     }
 }
 exports.IdGenerator = IdGenerator;
 // HELPER FUNCTIONS
 // ================================================================================================
-function buildId(millisecond, shard, sequence) {
-    var id = BigInt(millisecond).shiftLeft(12);
-    id = id.or(shard).shiftLeft(9);
-    id = id.or(sequence);
-    return id.toString(10);
+function hasClient(options) {
+    var optionsOrClient = options.redis;
+    return !optionsOrClient.host && !optionsOrClient.port && !optionsOrClient.auth_password;
 }
+// LUA SCRIPT
+// ================================================================================================
+var script = `
+    local sequence_key = KEYS[1]
+
+    if redis.call("EXISTS", sequence_key) == 0 then
+        redis.call("PSETEX", sequence_key, 1, "0")
+    end
+
+    local sequence = redis.call("INCR", sequence_key)
+
+    if sequence >= ${MAX_SEQUENCE} then
+        return redis.error_reply("Cannot generate ID, waiting for lock to expire.")
+    end
+
+    local time = redis.call("TIME")
+
+    return {
+        sequence,
+        tonumber(time[1]),
+        tonumber(time[2])
+    }
+`;
 //# sourceMappingURL=index.js.map

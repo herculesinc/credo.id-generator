@@ -1,10 +1,19 @@
 declare module "@credo/id-generator" {
+    // IMPORTS
+    // --------------------------------------------------------------------------------------------
+    import * as redis from 'redis';
     
     // INTERFACES
     // --------------------------------------------------------------------------------------------
     export interface IdGeneratorOptions {
-        shard: number;
-        epoch: number;
+        name   : string;
+        redis  : RedisOptions | redis.RedisClient;
+    }
+
+    interface RedisOptions {
+        host        : string;
+        port        : number;
+        auth_pass   : string;
     }
 
     // GENERATOR
