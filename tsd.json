@@ -5,14 +5,14 @@
   "path": "typings",
   "bundle": "typings/tsd.d.ts",
   "installed": {
-    "node/node.d.ts": {
-      "commit": "470954c4f427e0805a2d633636a7c6aa7170def8"
-    },
     "redis/redis.d.ts": {
       "commit": "470954c4f427e0805a2d633636a7c6aa7170def8"
     },
     "long/long.d.ts": {
       "commit": "a57c54b2b20bb38aadfa2460b82df9541dc0fdea"
+    },
+    "node/node.d.ts": {
+      "commit": "2c65d5ca7267fda6d49a3b447c8b089632fb5358"
     }
   }
 }

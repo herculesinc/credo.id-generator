@@ -1,26 +1,27 @@
 {
   "name": "@credo/id-generator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "ID Generator for Credo project",
   "main": "index.js",
+  "typings": "credo-id-generator.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/herculesinc/credo.id-generator.git/"
   },
   "license": "MIT",
   "author": {
-    "name": "irakliy",
-    "email": "irakliy81@live.com"
+    "name": "Credo360, Inc.",
+    "email": "developers@credo360.com"
   },
   "engines": {
-    "node": "5.0.0"
-  },
-  "devDependencies": {
-    "del": "^1.2.1",
-    "gulp": "^3.9.0"
+    "node": "6.4.0"
   },
   "dependencies": {
-    "long": "3.0.x",
-    "redis": "2.4.x"
+    "long": "3.2.x",
+    "redis": "2.6.x"
+  },
+  "devDependencies": {
+    "del": "2.2.x",
+    "gulp": "3.9.x"
   }
 }
