@@ -60,6 +60,28 @@ class IdGenerator extends events.EventEmitter {
     }
 }
 exports.IdGenerator = IdGenerator;
+// SINGLETON
+// ================================================================================================
+var instance;
+function configure(options, logger) {
+    if (instance)
+        throw new TypeError('Global ID generator has already been configured');
+    instance = new IdGenerator(options, logger);
+    return instance;
+}
+exports.configure = configure;
+function getInstance() {
+    if (!instance)
+        throw new TypeError('Global ID generator has not yet been configured');
+    return instance;
+}
+exports.getInstance = getInstance;
+function getNextId() {
+    if (!instance)
+        throw new TypeError('Global ID generator has not yet been configured');
+    return instance.getNextId();
+}
+exports.getNextId = getNextId;
 // ERRORS
 // ================================================================================================
 class IdGeneratorError extends nova.Exception {
