@@ -2,24 +2,35 @@ declare module "@credo/id-generator" {
     // IMPORTS
     // --------------------------------------------------------------------------------------------
     import * as redis from 'redis';
+    import * as nova from 'nova-base';
     
     // INTERFACES
     // --------------------------------------------------------------------------------------------
     export interface IdGeneratorOptions {
-        name   : string;
-        redis  : RedisOptions | redis.RedisClient;
+        name    : string;
+        batch?  : number;
+        window? : number;
+        redis   : RedisConnectionConfig | redis.RedisClient;
     }
 
-    interface RedisOptions {
-        host        : string;
-        port        : number;
-        auth_pass   : string;
+    export interface RedisConnectionConfig {
+        host            : string;
+        port            : number;
+        password        : string;
+        prefix?         : string;
+        retry_strategy? : (options: any) => number | Error;
     }
 
-    // GENERATOR
+    // GENERATOR CLASS
     // --------------------------------------------------------------------------------------------
 	export class IdGenerator {
-		constructor(options: IdGeneratorOptions);
+		constructor(options: IdGeneratorOptions, logger?: nova.Logger);
 		getNextId(): Promise<string>;
 	}
+
+    // SINGLETON
+    // --------------------------------------------------------------------------------------------
+    export function configure(options: IdGeneratorOptions, logger?: nova.Logger): IdGenerator;
+    export function getInstance(): IdGenerator;
+    export function getNextId(): Promise<string>;
 }
