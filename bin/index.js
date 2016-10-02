@@ -12,7 +12,6 @@ const MAX_SEQUENCE = Math.pow(2, FILLER_LENGTH);
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_CACHE_WINDOW = 100;
 const ERROR_EVENT = 'error';
-const COMMAND_NAME = 'generate id batch';
 const since = nova.util.since;
 // ID format: [sign:1][millisecond:43][sequence:20]
 // ID GENERATOR CLASS
@@ -41,16 +40,15 @@ class IdGenerator extends events.EventEmitter {
         this.logger && this.logger.debug('Generating new ID batch');
         return new Promise((resolve, reject) => {
             this.client.eval(script, 1, this.sequenceKey, this.idBatchSize, (error, reply) => {
+                this.logger && this.logger.trace(this.name, 'generate ID batch', since(start), !error);
                 if (error) {
                     error = new IdGeneratorError(error, 'Failed to get next ID');
-                    this.logger && this.logger.trace(this.name, COMMAND_NAME, since(start), false);
                     return reject(error);
                 }
                 this.checkpoint = this.getCheckpoint();
                 this.timestamp = reply[2] * 1000 + Math.floor(reply[3] / 1000);
                 this.sequence = reply[0];
                 this.sequenceMax = reply[1];
-                this.logger && this.logger.trace(this.name, COMMAND_NAME, since(start), true);
                 resolve(buildId(this.timestamp, this.sequence));
             });
         });
