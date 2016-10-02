@@ -1,6 +1,6 @@
 {
   "name": "@credo/id-generator",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "ID Generator for Credo project",
   "main": "index.js",
   "typings": "credo-id-generator.d.ts",

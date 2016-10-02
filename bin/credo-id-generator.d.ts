@@ -33,4 +33,10 @@ declare module "@credo/id-generator" {
     export function configure(options: IdGeneratorOptions, logger?: nova.Logger): IdGenerator;
     export function getInstance(): IdGenerator;
     export function getNextId(): Promise<string>;
+
+    // ERRORS
+    // --------------------------------------------------------------------------------------------
+    export class IdGeneratorError extends nova.Exception {
+        constructor(cause: Error, message: string);
+    }
 }
