@@ -1,10 +1,10 @@
 "use strict";
 // IMPORTS
 // ================================================================================================
-const events = require('events');
-const redis = require('redis');
-const nova = require('nova-base');
-const Long = require('long');
+const events = require("events");
+const redis = require("redis");
+const nova = require("nova-base");
+const Long = require("long");
 // MODULE VARIABLES
 // ================================================================================================
 const FILLER_LENGTH = 20;
@@ -31,13 +31,13 @@ class IdGenerator extends events.EventEmitter {
         });
     }
     getNextId() {
-        this.logger && this.logger.debug(`Getting next ID from ${this.name}`);
+        this.logger && this.logger.debug(`Getting next ID`, this.name);
         if (this.checkpoint === this.getCheckpoint() && this.sequence < this.sequenceMax) {
             this.sequence++;
             return Promise.resolve(buildId(this.timestamp, this.sequence));
         }
         const start = process.hrtime();
-        this.logger && this.logger.debug('Generating new ID batch');
+        this.logger && this.logger.debug('Generating new ID batch', this.name);
         return new Promise((resolve, reject) => {
             this.client.eval(script, 1, this.sequenceKey, this.idBatchSize, (error, reply) => {
                 this.logger && this.logger.trace(this.name, 'generate ID batch', since(start), !error);
