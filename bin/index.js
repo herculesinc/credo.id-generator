@@ -31,7 +31,13 @@ class IdGenerator extends events.EventEmitter {
         this.cacheWindow = options.window || DEFAULT_CACHE_WINDOW;
         // error in redis connection should not bring down the service
         this.client.on('error', (error) => {
-            this.emit(ERROR_EVENT, new IdGeneratorError(error, 'ID Generator error'));
+            if (error.command === 'AUTH' && error.code === 'UNCERTAIN_STATE') {
+                // this will be triggered on recconect attempts - do nothing
+                this.logger && logger.warn('Suppressing AUTH command error on reconnect');
+            }
+            else {
+                this.emit(ERROR_EVENT, new IdGeneratorError(error, 'ID Generator error'));
+            }
         });
     }
     getNextId() {
@@ -94,7 +100,7 @@ class IdGeneratorError extends nova.Exception {
 exports.IdGeneratorError = IdGeneratorError;
 // HELPER FUNCTIONS
 // ================================================================================================
-function prepareRedisOptions(options, limiterName, logger) {
+function prepareRedisOptions(options, sourceName, logger) {
     let redisOptions = options;
     // make sure retry strategy is defined
     if (!redisOptions.retry_strategy) {
@@ -105,7 +111,7 @@ function prepareRedisOptions(options, limiterName, logger) {
                 else if (options.total_retry_time > MAX_RETRY_TIME) {
                     return new Error('Retry time exhausted');
                 }
-                logger && logger.warn('Redis connection lost. Trying to recconect', limiterName);
+                logger && logger.warn('Redis connection lost. Trying to recconect', sourceName);
                 return Math.min(options.attempt * RETRY_INTERVAL_STEP, MAX_RETRY_INTERVAL);
             } });
     }

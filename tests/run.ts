@@ -1,5 +1,6 @@
 // IMPORTS
 // ================================================================================================
+import * as http from 'http';
 import { IdGenerator } from './../index';
 import { MockLogger } from './mocks/Logger';
 
@@ -19,9 +20,9 @@ const config = {
 
 const generator = new IdGenerator(config, new MockLogger());
 
-// TESTS
+// CREATE SERVER
 // ================================================================================================
-async function runTests() {
+const server = http.createServer(async function(request, response) {
     try {
         console.log(await generator.getNextId());
         console.log(await generator.getNextId());
@@ -42,8 +43,10 @@ async function runTests() {
         console.log(e.stack);
         console.log(JSON.stringify(e));
     }
-}
 
-// RUN TEST
-// ================================================================================================
-runTests();
+    response.end();
+});
+
+server.listen(3000, function() {
+    console.log('Server started');
+});
