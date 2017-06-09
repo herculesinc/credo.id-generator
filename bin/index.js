@@ -23,8 +23,8 @@ const since = nova.util.since;
 class IdGenerator extends events.EventEmitter {
     constructor(options, logger) {
         super();
-        this.name = options.name;
-        this.client = redis.createClient(prepareRedisOptions(options, logger));
+        this.name = options.name || 'id-generator';
+        this.client = redis.createClient(prepareRedisOptions(options.redis, this.name, logger));
         this.logger = logger;
         this.sequenceKey = `credo::id-generator::${options.name}`;
         this.idBatchSize = options.batch || DEFAULT_BATCH_SIZE;
@@ -94,22 +94,22 @@ class IdGeneratorError extends nova.Exception {
 exports.IdGeneratorError = IdGeneratorError;
 // HELPER FUNCTIONS
 // ================================================================================================
-function prepareRedisOptions(generatorOptions, logger) {
-    let reddisOptions = generatorOptions.redis;
+function prepareRedisOptions(options, limiterName, logger) {
+    let redisOptions = options;
     // make sure retry strategy is defined
-    if (!reddisOptions.retry_strategy) {
-        reddisOptions = Object.assign({}, reddisOptions, { retry_strategy: function (options) {
+    if (!redisOptions.retry_strategy) {
+        redisOptions = Object.assign({}, redisOptions, { retry_strategy: function (options) {
                 if (options.error && options.error.code === 'ECONNREFUSED') {
                     return new Error('The server refused the connection');
                 }
                 else if (options.total_retry_time > MAX_RETRY_TIME) {
                     return new Error('Retry time exhausted');
                 }
-                logger && logger.warn('Reddis connection lost. Trying to recconect', generatorOptions.name);
+                logger && logger.warn('Redis connection lost. Trying to recconect', limiterName);
                 return Math.min(options.attempt * RETRY_INTERVAL_STEP, MAX_RETRY_INTERVAL);
             } });
     }
-    return reddisOptions;
+    return redisOptions;
 }
 function buildId(timestamp, sequence) {
     let id = Long.fromNumber(timestamp);

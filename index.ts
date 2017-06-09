@@ -66,8 +66,8 @@ export class IdGenerator extends events.EventEmitter {
 	constructor(options: IdGeneratorOptions, logger?: nova.Logger) {
         super();
         
-        this.name = options.name;
-        this.client = redis.createClient(prepareRedisOptions(options, logger));
+        this.name = options.name || 'id-generator';
+        this.client = redis.createClient(prepareRedisOptions(options.redis, this.name, logger));
         this.logger = logger;
 
         this.sequenceKey = `credo::id-generator::${options.name}`;
@@ -142,12 +142,12 @@ export class IdGeneratorError extends nova.Exception {
 
 // HELPER FUNCTIONS
 // ================================================================================================
-function prepareRedisOptions(generatorOptions: IdGeneratorOptions, logger?: nova.Logger): RedisConnectionConfig {
-    let reddisOptions = generatorOptions.redis;
+function prepareRedisOptions(options: RedisConnectionConfig, limiterName: string, logger?: nova.Logger): RedisConnectionConfig {
+    let redisOptions = options;
 
     // make sure retry strategy is defined
-    if (!reddisOptions.retry_strategy) {
-        reddisOptions = {...reddisOptions, retry_strategy: function(options: RetryStrategyOptions) {
+    if (!redisOptions.retry_strategy) {
+        redisOptions = {...redisOptions, retry_strategy: function(options: RetryStrategyOptions) {
             if (options.error && options.error.code === 'ECONNREFUSED') {
                 return new Error('The server refused the connection');
             }
@@ -155,12 +155,12 @@ function prepareRedisOptions(generatorOptions: IdGeneratorOptions, logger?: nova
                 return new Error('Retry time exhausted');
             }
             
-            logger && logger.warn('Reddis connection lost. Trying to recconect', generatorOptions.name);
+            logger && logger.warn('Redis connection lost. Trying to recconect', limiterName);
             return Math.min(options.attempt * RETRY_INTERVAL_STEP, MAX_RETRY_INTERVAL);
         }};
     }
 
-    return reddisOptions;
+    return redisOptions;
 }
 
 function buildId(timestamp: number, sequence: number) {
