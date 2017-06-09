@@ -11,7 +11,7 @@ export interface IdGeneratorOptions {
 	name    : string;
     batch?  : number;
     window? : number;
-	redis   : RedisConnectionConfig | redis.RedisClient;
+	redis   : RedisConnectionConfig;
 }
 
 export interface RedisConnectionConfig {
@@ -19,15 +19,28 @@ export interface RedisConnectionConfig {
     port            : number;
     password        : string;
     prefix?         : string;
-    retry_strategy? : (options: any) => number | Error;
+    retry_strategy? : (options: RetryStrategyOptions) => number | Error;
+}
+
+export interface RetryStrategyOptions {
+    error           : any;
+    attempt         : number;
+    total_retry_time: number;
+    times_connected : number;
 }
 
 // MODULE VARIABLES
 // ================================================================================================
 const FILLER_LENGTH = 20;
 const MAX_SEQUENCE = Math.pow(2, FILLER_LENGTH);
+
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_CACHE_WINDOW = 100; 
+
+const MAX_RETRY_TIME = 60000;       // 1 minute
+const MAX_RETRY_INTERVAL = 3000;    // 3 seconds
+const RETRY_INTERVAL_STEP = 200;    // 200 milliseconds
+
 const ERROR_EVENT = 'error';
 const since = nova.util.since;
 
@@ -37,9 +50,9 @@ const since = nova.util.since;
 // ================================================================================================
 export class IdGenerator extends events.EventEmitter {
 	
-    name            : string;
-    private client  : redis.RedisClient;
-    private logger? : nova.Logger;
+    name                : string;
+    private client      : redis.RedisClient;
+    private logger?     : nova.Logger;
     
     private sequenceKey : string;
     private idBatchSize : number;
@@ -54,7 +67,7 @@ export class IdGenerator extends events.EventEmitter {
         super();
         
         this.name = options.name;
-        this.client = isClient(options.redis) ? options.redis : redis.createClient(options.redis);
+        this.client = redis.createClient(prepareRedisOptions(options, logger));
         this.logger = logger;
 
         this.sequenceKey = `credo::id-generator::${options.name}`;
@@ -129,8 +142,25 @@ export class IdGeneratorError extends nova.Exception {
 
 // HELPER FUNCTIONS
 // ================================================================================================
-function isClient(redis: any): redis is redis.RedisClient {
-    return !redis.host && !redis.port && !redis.password;
+function prepareRedisOptions(generatorOptions: IdGeneratorOptions, logger?: nova.Logger): RedisConnectionConfig {
+    let reddisOptions = generatorOptions.redis;
+
+    // make sure retry strategy is defined
+    if (!reddisOptions.retry_strategy) {
+        reddisOptions = {...reddisOptions, retry_strategy: function(options: RetryStrategyOptions) {
+            if (options.error && options.error.code === 'ECONNREFUSED') {
+                return new Error('The server refused the connection');
+            }
+            else if (options.total_retry_time > MAX_RETRY_TIME) {
+                return new Error('Retry time exhausted');
+            }
+            
+            logger && logger.warn('Reddis connection lost. Trying to recconect', generatorOptions.name);
+            return Math.min(options.attempt * RETRY_INTERVAL_STEP, MAX_RETRY_INTERVAL);
+        }};
+    }
+
+    return reddisOptions;
 }
 
 function buildId(timestamp: number, sequence: number) {

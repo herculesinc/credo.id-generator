@@ -9,7 +9,6 @@
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",
-            "preLaunchTask": "build",
             "runtimeExecutable": null,
             "runtimeArgs": [ "--nolazy" ],
             "env": {
@@ -17,7 +16,8 @@
             },
             "console": "externalTerminal",
             "sourceMaps": true,
-            "outDir": "${workspaceRoot}/bin"
+            "outFiles": ["${workspaceRoot}/bin/**/*.js"],
+            "preLaunchTask": "build"
         }
     ]
 }

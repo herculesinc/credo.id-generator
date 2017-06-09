@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // IMPORTS
 // ================================================================================================
 const events = require("events");
@@ -11,6 +12,9 @@ const FILLER_LENGTH = 20;
 const MAX_SEQUENCE = Math.pow(2, FILLER_LENGTH);
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_CACHE_WINDOW = 100;
+const MAX_RETRY_TIME = 60000; // 1 minute
+const MAX_RETRY_INTERVAL = 3000; // 3 seconds
+const RETRY_INTERVAL_STEP = 200; // 200 milliseconds
 const ERROR_EVENT = 'error';
 const since = nova.util.since;
 // ID format: [sign:1][millisecond:43][sequence:20]
@@ -20,7 +24,7 @@ class IdGenerator extends events.EventEmitter {
     constructor(options, logger) {
         super();
         this.name = options.name;
-        this.client = isClient(options.redis) ? options.redis : redis.createClient(options.redis);
+        this.client = redis.createClient(prepareRedisOptions(options, logger));
         this.logger = logger;
         this.sequenceKey = `credo::id-generator::${options.name}`;
         this.idBatchSize = options.batch || DEFAULT_BATCH_SIZE;
@@ -90,8 +94,22 @@ class IdGeneratorError extends nova.Exception {
 exports.IdGeneratorError = IdGeneratorError;
 // HELPER FUNCTIONS
 // ================================================================================================
-function isClient(redis) {
-    return !redis.host && !redis.port && !redis.password;
+function prepareRedisOptions(generatorOptions, logger) {
+    let reddisOptions = generatorOptions.redis;
+    // make sure retry strategy is defined
+    if (!reddisOptions.retry_strategy) {
+        reddisOptions = Object.assign({}, reddisOptions, { retry_strategy: function (options) {
+                if (options.error && options.error.code === 'ECONNREFUSED') {
+                    return new Error('The server refused the connection');
+                }
+                else if (options.total_retry_time > MAX_RETRY_TIME) {
+                    return new Error('Retry time exhausted');
+                }
+                logger && logger.warn('Reddis connection lost. Trying to recconect', generatorOptions.name);
+                return Math.min(options.attempt * RETRY_INTERVAL_STEP, MAX_RETRY_INTERVAL);
+            } });
+    }
+    return reddisOptions;
 }
 function buildId(timestamp, sequence) {
     let id = Long.fromNumber(timestamp);

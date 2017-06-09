@@ -1,6 +1,6 @@
 {
   "name": "@credo/id-generator",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "ID Generator for Credo project",
   "main": "index.js",
   "typings": "credo-id-generator.d.ts",
@@ -19,7 +19,7 @@
   "dependencies": {
     "long": "3.2.x",
     "nova-base": "0.7.x",
-    "redis": "2.6.x"
+    "redis": "2.7.x"
   },
   "devDependencies": {
     "del": "2.2.x",

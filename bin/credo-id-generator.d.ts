@@ -1,16 +1,15 @@
 declare module "@credo/id-generator" {
     // IMPORTS
     // --------------------------------------------------------------------------------------------
-    import * as redis from 'redis';
     import * as nova from 'nova-base';
     
     // INTERFACES
     // --------------------------------------------------------------------------------------------
     export interface IdGeneratorOptions {
-        name    : string;
-        batch?  : number;
-        window? : number;
-        redis   : RedisConnectionConfig | redis.RedisClient;
+        name            : string;
+        batch?          : number;
+        window?         : number;
+        redis           : RedisConnectionConfig;
     }
 
     export interface RedisConnectionConfig {
@@ -18,7 +17,14 @@ declare module "@credo/id-generator" {
         port            : number;
         password        : string;
         prefix?         : string;
-        retry_strategy? : (options: any) => number | Error;
+        retry_strategy? : (options: RetryStrategyOptions) => number | Error;
+    }
+
+    export interface RetryStrategyOptions {
+        error           : any;
+        attempt         : number;
+        total_retry_time: number;
+        times_connected : number;
     }
 
     // GENERATOR CLASS
