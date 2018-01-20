@@ -1,6 +1,6 @@
 {
   "name": "@credo/id-generator",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "description": "ID Generator for Credo project",
   "main": "index.js",
   "typings": "credo-id-generator.d.ts",
@@ -14,7 +14,7 @@
     "email": "developers@credo360.com"
   },
   "engines": {
-    "node": "6.9.0"
+    "node": "8.9.0"
   },
   "dependencies": {
     "long": "3.2.x",
